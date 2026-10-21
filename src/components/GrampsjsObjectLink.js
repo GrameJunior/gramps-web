@@ -1,9 +1,6 @@
 import {LitElement, css, html} from 'lit'
 
-import {fireEvent} from '../util.js'
-
-// Replaced at build time by rollup
-const BASE_DIR = ''
+import {appHref, handleAppLinkClick} from '../util.js'
 
 const PREVIEWABLE = new Set([
   'person',
@@ -53,7 +50,7 @@ export class GrampsjsObjectLink extends LitElement {
   }
 
   get _href() {
-    return `${BASE_DIR}/${this.objectType}/${this.grampsId}`
+    return appHref(this._path)
   }
 
   get _canPreview() {
@@ -62,11 +59,12 @@ export class GrampsjsObjectLink extends LitElement {
     )
   }
 
+  get _path() {
+    return `${this.objectType}/${this.grampsId}`
+  }
+
   _handleClick(e) {
-    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
-      return
-    e.preventDefault()
-    fireEvent(this, 'nav', {path: `${this.objectType}/${this.grampsId}`})
+    handleAppLinkClick(e, this._path)
   }
 
   _handleMouseEnter() {

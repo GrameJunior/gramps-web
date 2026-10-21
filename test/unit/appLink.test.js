@@ -1,0 +1,32 @@
+import {describe, it, expect} from 'vitest'
+import {handleAppLinkClick} from '../../src/util.js'
+
+// Clicks a link with `init` and returns the click event and the `nav` events
+function clickLink(init = {}) {
+  const link = document.createElement('a')
+  document.body.appendChild(link)
+  const navs = []
+  link.addEventListener('nav', e => navs.push(e.detail))
+  link.addEventListener('click', e => handleAppLinkClick(e, 'person/I0001'))
+  const event = new MouseEvent('click', {button: 0, cancelable: true, ...init})
+  link.dispatchEvent(event)
+  link.remove()
+  return {event, navs}
+}
+
+describe('handleAppLinkClick', () => {
+  it('goes to the page within the app on a plain left click', () => {
+    const {event, navs} = clickLink()
+    expect(event.defaultPrevented).toBe(true)
+    expect(navs).toEqual([{path: 'person/I0001'}])
+  })
+
+  it.each([{ctrlKey: true}, {metaKey: true}, {shiftKey: true}, {button: 1}])(
+    'leaves a click with %o to the browser',
+    init => {
+      const {event, navs} = clickLink(init)
+      expect(event.defaultPrevented).toBe(false)
+      expect(navs).toEqual([])
+    }
+  )
+})

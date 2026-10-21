@@ -23,7 +23,7 @@ import '../components/GrampsjsFilterChip.js'
 import '../components/GrampsjsFilters.js'
 import {GrampsjsStaleDataMixin} from '../mixins/GrampsjsStaleDataMixin.js'
 
-import {fireEvent} from '../util.js'
+import {appHref, fireEvent} from '../util.js'
 import {tagFilter} from '../filterDefinitions.js'
 
 export class GrampsjsViewObjectsBase extends GrampsjsStaleDataMixin(
@@ -199,6 +199,7 @@ export class GrampsjsViewObjectsBase extends GrampsjsStaleDataMixin(
               sortDescriptor="${this._sort}"
               breakPoint="${this._tableBreakPoint}"
               .appState="${this.appState}"
+              .rowHref="${this._getRowHref}"
               @table:row-click="${this._handleTableRowClick}"
               @table:sort-changed="${this._handleTableSortChanged}"
               @selection:changed="${this._handleSelectionChanged}"
@@ -616,6 +617,9 @@ export class GrampsjsViewObjectsBase extends GrampsjsStaleDataMixin(
     const {rowNumber} = e.detail
     fireEvent(this, 'nav', {path: this._getItemPath(this._data[rowNumber])})
   }
+
+  // Arrow function, so that the table can call it with the right `this`
+  _getRowHref = rowNumber => appHref(this._getItemPath(this._data[rowNumber]))
 
   _handleTableSortChanged(e) {
     const {key, descending} = e.detail

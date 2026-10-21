@@ -574,6 +574,28 @@ export function fireEvent(target, name, detail) {
   )
 }
 
+// Replaced at build time by rollup
+const BASE_DIR = ''
+
+// Returns the URL of the app page at `path`, e.g. `person/I0001`
+export function appHref(path) {
+  return `${BASE_DIR}/${path}`
+}
+
+// Returns whether a click on a link is left to the browser, e.g. to open it
+// in a new tab with Ctrl or the middle button, rather than handled by the app
+export function isNewTabClick(e) {
+  return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey
+}
+
+// Click handler for a link to the app page at `path`: a plain left click goes
+// to the page within the app, any other click is left to the browser
+export function handleAppLinkClick(e, path) {
+  if (isNewTabClick(e)) return
+  e.preventDefault()
+  fireEvent(e.currentTarget, 'nav', {path})
+}
+
 function uuidv4() {
   return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c =>
     (

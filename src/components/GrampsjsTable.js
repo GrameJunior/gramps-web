@@ -11,7 +11,7 @@ import './GrampsjsTooltip.js'
 
 import {GrampsjsAppStateMixin} from '../mixins/GrampsjsAppStateMixin.js'
 import {sharedStyles} from '../SharedStyles.js'
-import {clickKeyHandler, fireEvent} from '../util.js'
+import {clickKeyHandler, fireEvent, isNewTabClick} from '../util.js'
 import {renderIconSvg} from '../icons.js'
 
 export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
@@ -64,6 +64,12 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
 
         table.linked tbody tr:hover {
           cursor: pointer;
+        }
+
+        a.row-link,
+        a.row-link:visited {
+          color: inherit;
+          text-decoration: none;
         }
 
         table.linked tbody tr:not(.selected):hover {
@@ -217,6 +223,7 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
       breakPoint: {type: Number},
       loading: {type: Boolean},
       linked: {type: Boolean},
+      rowHref: {attribute: false},
       sortable: {type: Boolean},
       sort: {type: Number},
       descending: {type: Boolean},
@@ -238,6 +245,7 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
     this.naturalWidth = false
     this.breakPoint = 600
     this.linked = false
+    this.rowHref = null
     this.sortable = false
     this.sort = -1
     this.descending = false
@@ -303,7 +311,7 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
               ({item, index}) => html`
                 <tr
                   class="${this._selectedIndices.has(index) ? 'selected' : ''}"
-                  @click="${() => this._handleRowClick(index)}"
+                  @click="${e => this._handleRowClick(e, index)}"
                   @keydown="${clickKeyHandler}"
                   tabindex="${this.linked ? '0' : '-1'}"
                 >
@@ -336,7 +344,13 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
                                   )}</span
                                 ></span
                               >`
-                            : this._formatValue(this.columns[colIndex], value)}
+                            : this._renderCellValue(
+                                this._formatValue(
+                                  this.columns[colIndex],
+                                  value
+                                ),
+                                index
+                              )}
                         </div>
                       </td>
                     `
@@ -391,6 +405,16 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
 
   _colLabel(name) {
     return this._(name).replace(/:$/, '')
+  }
+
+  // A link in each cell lets the browser open the row in a new tab, e.g. with
+  // Ctrl or the middle button, or from the context menu. The row stays the
+  // tab stop for the keyboard.
+  _renderCellValue(value, index) {
+    if (!this.linked || !this.rowHref) return value
+    return html`<a class="row-link" href="${this.rowHref(index)}" tabindex="-1"
+      >${value}</a
+    >`
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -522,7 +546,10 @@ export class GrampsjsTable extends GrampsjsAppStateMixin(LitElement) {
     return indexed
   }
 
-  _handleRowClick(originalIndex) {
+  _handleRowClick(e, originalIndex) {
+    // Clicks on the row link that open a new tab are left to the browser
+    if (this.rowHref && isNewTabClick(e)) return
+    e.preventDefault()
     fireEvent(this, 'table:row-click', {rowNumber: originalIndex})
   }
 
